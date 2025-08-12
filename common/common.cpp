@@ -725,7 +725,7 @@ bool gpt_params_find_arg(int argc, char ** argv, const std::string & arg, gpt_pa
             }
         }
         return true;
-    }  
+    }
     if (arg == "--cfg-negative-prompt") {
         CHECK_ARG
         sparams.cfg_negative_prompt = argv[i];
@@ -1071,7 +1071,7 @@ bool gpt_params_find_arg(int argc, char ** argv, const std::string & arg, gpt_pa
         size_t pos = 0;
         while ((pos = servers.find(",")) != std::string::npos) {
             std::string server = servers.substr(0, pos);
-            ggml_backend_rpc_buffer_type(server.c_str());            
+            ggml_backend_rpc_buffer_type(server.c_str());
             servers.erase(0, pos + 1);
         }
         ggml_backend_rpc_buffer_type(servers.c_str());
@@ -1128,6 +1128,17 @@ bool gpt_params_find_arg(int argc, char ** argv, const std::string & arg, gpt_pa
     }
     if (arg == "-thp" || arg == "--transparent-huge-pages") {
         params.use_thp = true;
+        return true;
+    }
+    if (arg == "--huge-page-mb") {
+        CHECK_ARG
+        int32_t huge_page_mb = std::stoi(argv[i]);
+        if (huge_page_mb < 0 && huge_page_mb != -1) {
+            fprintf(stderr, "error: Invalid value for --huge-page-mb: %d (must be >= 0)\n", huge_page_mb);
+            invalid_param = true;
+            return true;
+        }
+        params.huge_page_mb = huge_page_mb;
         return true;
     }
     if (arg == "--numa") {
@@ -2052,7 +2063,7 @@ std::string string_join(const std::vector<std::string> & strs, const std::string
     if (strs.empty()) {
         return "";
     }
-    
+
     std::ostringstream oss;
     for (size_t i = 0; i < strs.size(); ++i) {
         if (i > 0) {
@@ -2519,6 +2530,7 @@ struct llama_model_params llama_model_params_from_gpt_params(const gpt_params & 
     mparams.check_tensors   = params.check_tensors;
     mparams.repack_tensors  = params.repack_tensors;
     mparams.use_thp         = params.use_thp;
+    mparams.huge_page_mb    = params.huge_page_mb;
     if (params.kv_overrides.empty()) {
         mparams.kv_overrides = NULL;
     } else {
@@ -3667,6 +3679,7 @@ void yaml_dump_non_result_info(FILE * stream, const gpt_params & params, const l
     fprintf(stream, "no_mmap: %s # default: false\n", !params.use_mmap ? "true" : "false");
     fprintf(stream, "repack: %s # default: false\n", params.repack_tensors ? "true" : "false");
     fprintf(stream, "use_thp: %s # default: false\n", params.use_thp ? "true" : "false");
+    fprintf(stream, "huge_page_mb: %d # default: -1 (use system size)\n", params.huge_page_mb);
     fprintf(stream, "penalize_nl: %s # default: false\n", sparams.penalize_nl ? "true" : "false");
     fprintf(stream, "ppl_output_type: %d # default: 0\n", params.ppl_output_type);
     fprintf(stream, "ppl_stride: %d # default: 0\n", params.ppl_stride);

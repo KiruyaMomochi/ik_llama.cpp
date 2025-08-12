@@ -376,6 +376,7 @@ extern "C" {
         bool check_tensors; // validate model tensor data
         bool repack_tensors;// repack if available
         bool use_thp;       // uase transparent huge pages (linux only)
+        int32_t huge_page_mb;    // huge page size in mb
     };
 
     // NOTE: changing the default values of parameters marked as [EXPERIMENTAL] may cause crashes or incorrect results in certain configurations
